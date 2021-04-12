@@ -1,6 +1,7 @@
 const path = require('path')
 const express = require('express')
 const formatMessage = require('./utils/messages')
+const { userJoin, getCurrentUser } = require('./utils/users')
 
 const app = express()
 
@@ -12,6 +13,11 @@ const io = require('./socket').init(server)
 const bot = 'Chat App'
 
 io.on('connection', socket => {
+  // Joining the room
+  socket.on('join-room', ({ username, room }) => {
+    socket.join('')
+  })
+
   // Welcome current user
   socket.emit('message', formatMessage(bot, 'Welcome Here'))
 
