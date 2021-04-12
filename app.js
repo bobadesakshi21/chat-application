@@ -1,7 +1,7 @@
 const path = require('path')
 const express = require('express')
 const formatMessage = require('./utils/messages')
-const { userJoin, getCurrentUser } = require('./utils/users')
+const { userJoin, getCurrentUser, userLeave, roomUsers } = require('./utils/users')
 
 const app = express()
 
@@ -15,23 +15,40 @@ const bot = 'Chat App'
 io.on('connection', socket => {
   // Joining the room
   socket.on('join-room', ({ username, room }) => {
-    socket.join('')
-  })
+    const user = userJoin(socket.id, username, room)
+    socket.join(user.room)
 
-  // Welcome current user
-  socket.emit('message', formatMessage(bot, 'Welcome Here'))
+    // Welcome current user
+    socket.emit('message', formatMessage(bot, 'Welcome Here'))
 
-  // Broadcast when a new user connects
-  socket.broadcast.emit('message', formatMessage(bot, 'A user has joined the chat'))
+    // Broadcast when a new user connects
+    socket.to(user.room).emit('message', formatMessage(bot, `${username} has joined the chat`))
 
-  // Runs when the client disconnects
-  socket.on('disconnect', () => {
-    io.emit('message', formatMessage(bot, 'A user has left the chat'))
+    // Send users and rooms info
+    io.to(user.room).emit('roomUsers', {
+      room: user.room,
+      users: roomUsers(user.room)
+    })
   })
 
   // Listen for chat message
   socket.on('chat-message', message => {
-    io.emit('message', formatMessage('USER', message))
+    const user = getCurrentUser(socket.id)
+    io.to(user.room).emit('message', formatMessage(user.username, message))
+  })
+
+  // Runs when the client disconnects
+  socket.on('disconnect', () => {
+    const user = userLeave(socket.id)
+    if (user) {
+      socket.to(user.room).emit('message', formatMessage(bot, `${user.username} has left the chat`))
+    }
+
+    // Send users and rooms info
+    io.to(user.room).emit('roomUsers', {
+      room: user.room,
+      users: roomUsers(user.room)
+    })
   })
 })
 
