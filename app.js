@@ -9,8 +9,11 @@ const server = app.listen(3000, () => {
 
 const io = require('./socket').init(server)
 
+io.on('connection', socket => {
+  console.log('New web socket connection')
+  socket.emit('message', 'Welcome Here')
+})
+
 const chatRoute = require('./routes/chat')
 
 app.use(express.static(path.join(__dirname, 'public')))
-
-app.use('/chat', chatRoute)
