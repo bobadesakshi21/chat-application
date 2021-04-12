@@ -14,6 +14,6 @@ io.on('connection', socket => {
   console.log('New web socket connection')
 })
 
-app.listen(3000, () => {
+server.listen(3000, () => {
   console.log('Server is up and running`')
 })
